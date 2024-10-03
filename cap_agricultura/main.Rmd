@@ -16,6 +16,7 @@ library(kableExtra)
 library(sidrar)
 library(lubridate)
 library(petknitr)
+library(janitor)
 
 petknitr::setup()
 petgg::set_theme()
@@ -31,13 +32,20 @@ triForm <- function(x) paste0(substr(x, 6, 6),"T\n",substr(x, 1, 4))
 
 # Agronegócio
 
-O setor agropecuário atualmente representa 20,3% do PIB do Tocantins, conforme o último dado disponibilizado pelo IBGE, destacando o estado na produção de grãos na Região Norte do Brasil. Nesta seção serão apresentados os dados referentes a área plantada, área colhida, produção e rendimento médio das principais safras, subsequente os dados do abate de bovinos.
+O agronegócio é um pilar fundamental da economia do Tocantins, representando 20,3% do PIB estadual. Este setor não só é vital a nível regional, mas também se destaca nacionalmente, principalmente na produção de grãos, colocando o Tocantins entre os líderes da região Norte. A soja é o carro-chefe, correspondendo a mais de 40% da produção agrícola, seguida por cana-de-açúcar e milho, com arroz e mandioca também desempenhando papéis significativos. O estado possui mais de nove milhões de hectares cultivados, refletindo a vastidão e importância da agricultura regional.
+O rendimento médio das culturas é um indicador fundamental da eficiência agrícola, e o Tocantins demonstra resultados impressionantes, particularmente com a cana-de-açúcar e a mandioca. Esses altos rendimentos são indicativos de práticas agrícolas avançadas e de um foco contínuo na otimização da produtividade.
+No que tange à pecuária, o abate de bovinos é também uma componente vital do agronegócio no Tocantins. O estado mantém uma produção constante ao longo do ano, com picos significativos que evidenciam a demanda contínua por carne bovina. A estrutura do mercado de abates reflete uma cadeia produtiva bem organizada e capaz de sustentar tanto o mercado interno quanto contribuir para o abastecimento nacional.
+ 
+No estado, os principais produtos cultivados incluem a soja, que representa 41,09% da produção total das lavouras, seguida pela cana-de-açúcar, com 28,55% da produção. O milho ocupa a terceira posição, com 13,83%, enquanto o arroz e a mandioca completam os cinco principais cultivos, representando 6,06% e 2,53% da produção, respectivamente. No total, são 9.610.658 hectares dedicados à agricultura.
+O rendimento médio das principais culturas é ilustrado na Figura 1.1.2, destacando como as características de cada cultivo impactam diretamente na área necessária para a plantação, com o objetivo de otimizar a qualidade da colheita. Esse rendimento é calculado pela divisão dos quilogramas colhidos pela área plantada em hectares. A cana-de-açúcar apresenta o maior rendimento médio, com 80.655 kg/ha, seguida pela mandioca com 16.097 kg/ha, arroz com 5.319 kg/ha, milho com 5.017 kg/ha e soja com 3.286 kg/ha.
+A Figura 1.1.3 detalha a área plantada para as safras de 2023, mostrando que a soja domina o uso do solo agrícola, ocupando 1.305.176 hectares, ou 63,80% da área total destinada à agricultura. O milho utiliza 14,07% da área, seguido por arroz (5,82%), cana-de-açúcar (1,81%) e mandioca (0,80%). Da área total plantada, 99,99% foi colhida.
+ 
+No setor pecuário, o abate de bovinos totalizou 1.253.201 cabeças no ano, com o maior volume registrado no terceiro trimestre, correspondendo a 27,63% do total anual. Das categorias abatidas, 416.586 eram vacas, representando 33,24% do total, enquanto 736.388 eram bois, correspondendo a 58,76%. Não há registro de abates de novilhas ou novilhos.
+Ainda sobre o setor agropecuário, foi registrado um total de 15.815.203 abates de frangos. 
 
 
-Destacam-se no estado como principais produtos cultivados a soja, esta com participação de 37,72% na produção das lavouras apresentadas, e a cana-de-açúcar, responsável por 34,20%. Ocupando a terceira posição no ranking da produção, o milho representando 17,58%, seguido pelo arroz e mandioca, com 7,46% e 3,04% respectivamente, assim, completando o ranking com as cinco maiores produções agrícolas tocantinenses com o total de 1.680.992 hectares de área plantada.
 
-
-```{r producao, fig.cap= "Produção Tocantins", fig.subcap="Em milhões de toneladas. Estimativa anual", fig.source = "\\acrshort{ibge}, 2022.", wrap = "open"}
+```{r producao, fig.cap= "Produção Tocantins", fig.subcap="Em milhões de toneladas. Estimativa anual", fig.source = "\\acrshort{ibge}, 2023.", wrap = "open"}
 # Produção - Tocantins 2022
 
 # Os produtos são Arroz, milho 1 safra, milho 2 safra, soja, cana de açucar e mandioca
@@ -47,21 +55,24 @@ produtos <- c(39432, 39441, 39442, 39443, 39456, 39467)
 prod <- get_sidra(
   x = 6588,
   variable = 35,
-  period =  "202212",
+  period =  "202312",
   header = TRUE,
   geo = "State",
   geo.filter = list("State" = 17),
   format = 4
 )
 
+prod <- prod %>%
+  clean_names()
+
 prod %>%
   filter(
-    `Mês (Código)` == "202212",
-    `Produto das lavouras (Código)` %in% produtos
+    `mes_codigo` == "202312",
+    `produto_das_lavouras_codigo` %in% produtos
   ) %>%
   transmute(
-    produto = `Produto das lavouras`,
-    valor = Valor
+    produto = `produto_das_lavouras`,
+    valor = valor
   ) %>%
   mutate(
     produto = str_extract(produto, ".[a-z]+")
@@ -72,26 +83,27 @@ prod %>%
   geom_bar(aes(x = produto, y = total), stat = "identity") +
   scale_y_continuous(labels = function(n) n / M)
 ```
-
 &nbsp;
 
-
-```{r rendim_medio, fig.cap= "Rendimento médio das lavouras", fig.subcap="Mil quilogramas por hectare. Estimativa anual", fig.source = "\\acrshort{sidra}/IBGE, 2022."}
+```{r rendim_medio, fig.cap= "Rendimento médio das lavouras", fig.subcap="Mil quilogramas por hectare. Estimativa anual", fig.source = "\\acrshort{sidra}/IBGE, 2023."}
 rend_medio <- get_sidra(
   x = 6588,
   variable = 36,
-  period = "202212",
+  period = "202312",
   geo = "State",
   geo.filter = list("State" = 17),
   header = TRUE,
   format = 4
 )
 
+rend_medio <- rend_medio %>%
+  clean_names()
+
 rend_medio %>%
-  filter(`Produto das lavouras (Código)` %in% produtos) %>%
+  filter(`produto_das_lavouras_codigo` %in% produtos) %>%
   transmute(
-    produto = `Produto das lavouras`,
-    valor = Valor
+    produto = `produto_das_lavouras`,
+    valor = valor
   ) %>%
   mutate(
     produto = str_extract(produto, ".[a-z]+")
@@ -102,26 +114,28 @@ rend_medio %>%
   geom_bar(aes(x = produto, y = total), stat = "identity") +
   scale_y_continuous(labels = function(n) n / m)
 ```
-
 &nbsp;
 
-```{r area_plantada, fig.cap= "Área plantada das lavouras", fig.subcap="Em mil hectares. Estimativa anual", fig.source = "\\acrshort{sidra}/IBGE, 2022.", wrap = "close"}
+```{r area_plantada, fig.cap= "Área plantada das lavouras", fig.subcap="Em mil hectares. Estimativa anual", fig.source = "\\acrshort{sidra}/IBGE, 2023.", wrap = "close"}
 # Área Plantada
 area_plan <- get_sidra(
   x = 6588,
   variable = 216,
-  period = "202212",
+  period = "202312",
   geo = "State",
   geo.filter = list("State" = 17),
   header = TRUE,
   format = 4
 )
 
+area_plan <- area_plan %>%
+  clean_names()
+
 area_plan %>%
-  filter(`Produto das lavouras (Código)` %in% produtos) %>%
+  filter(`produto_das_lavouras_codigo` %in% produtos) %>%
   transmute(
-    produto = `Produto das lavouras`,
-    valor = Valor
+    produto = `produto_das_lavouras`,
+    valor = valor
   ) %>%
   mutate(
     produto = str_extract(produto, ".[a-z]+")
@@ -133,60 +147,65 @@ area_plan %>%
   scale_y_continuous(labels = function(n) n / m)
 ```
 
-
-O rendimento médio das principais produções do Tocantins  podem ser observados na Figura [fig:@rendim_medio], este mostra como as características próprias de cada um deles tem resultado determinante no cálculo da área destinada à plantação, visando a qualidade em que será colhida. O cálculo é feito a partir da divisão entre quilogramas colhidos pela área plantada em hectare, de maneira que, quanto maior o valor do rendimento médio, menor é a área necessária para sua colheita. Conforme os dados disponibilizados, o maior rendimento médio é o da cana-de-açúcar com 79.145 kg/ha, seguido pelo da mandioca com valor de 17.177 kg/ha, o milho com 8.480 kg/ha, o arroz e soja, com respectivamente 5.349 kh/ha e 2.943 kg/ha, sendo estas a que possuem maior necessidade de área destinada à plantação e produção da quantidade desejada.
-
-Observa-se na Figura [fig:@area_plantada] a área plantada das safras de 2022; é possível constatar, também, através do rendimento médio, mostrando àquelas que requerem maior área destinada à plantação, em que foram destinados 1.680.992 hectares no Tocantins às cinco maiores lavouras, em que destes 99,05%, 1.665.084 hectares, correspondem a área colhida. A soja se destaca como produto a utilizar a maior parte do total destinado às produções, ocupando 1.144.764 hectares, correspondendo a 68,10% da área total, em seguida o milho com utilização de 21,24% da área, o arroz corresponde a 7,41%, a cana-de-açúcar 2,30%, e a mandioca, plantação a utilizar menos do espaço destinado à cultura, com 0,95%.
-
-Já nos resultados do abate de bovinos, no decorrer dos quatro trimestres o gado bovino apresentou o total de abate de 770.508 cabeças, com destaque no terceiro trimestre correspondente a 27,36% dos abates totais e constância numérica ao longo dos quatro trimestres; as vacas com o abate total de 290.349 cabeças, com 28,57% dos abates no primeiro trimestre e decréscimo de abates ao longo dos próximos; e as novilhas com o total de 16.742 cabeças nos dois primeiros trimestres, não constando os resultados do terceiro e quarto trimestre, em que os valores foram inibidos para não identificar o informante.
-
-```{r abates, fig.cap= "Abate dos principais animais",   fig.subcap = "Mil cabeças", fig.source =         "\\acrshort{sidra}/IBGE, 2022.", wrap = TRUE}
+```{r abates, fig.cap= "Abate dos principais animais",   fig.subcap = "Mil cabeças", fig.source =         "\\acrshort{sidra}/IBGE, 2023.", wrap = TRUE}
 # Abate de frangos, bovinos, vacas por trimestre
 # Unidade em Cabeças
 abate_bovino <- get_sidra(
   x = 1092,
-  period = c("202201", "202202", "202203", "202204"),
+  period = c("202301", "202302", "202303", "202304"),
   geo = "State",
   geo.filter = list("State" = 17),
   header = TRUE,
   format = 4
-  ) %>% filter(
-  `Tipo de rebanho bovino` %in% c(
+  ) 
+
+abate_bovino <- abate_bovino %>%
+  clean_names()
+
+abate_bovino %>%
+  filter(
+  `tipo_de_rebanho_bovino` %in% c(
     "Novilhos",
     "Novilhas",
     "Bois",
     "Vacas"
   ),
-  `Referência temporal` == "Total do trimestre",
-  `Tipo de inspeção` == "Total",
-  `Variável` == "Animais abatidos"
+  `referencia_temporal` == "Total do trimestre",
+  `tipo_de_inspecao` == "Total",
+  `variavel` == "Animais abatidos"
   ) %>%
-  select(`Trimestre (Código)`, `Tipo de rebanho bovino`, Valor)
+  select(`trimestre_codigo`, `tipo_de_rebanho_bovino`, valor)
 
 # Unidade em cabeças
 abate_frango <- get_sidra(
   x = 1094,
-  period = c("202201", "202202", "202203", "202204"),
+  period = c("202301", "202302", "202303", "202304"),
   geo = "State",
   geo.filter = list("State" = 17),
   header = TRUE,
   format = 4
-) %>%
+) 
+
+abate_frango <- abate_frango %>%
+  clean_names()
+
+abate_frango %>%
   filter(
-  `Referência temporal` == "Total do trimestre",
-  `Tipo de inspeção` == "Total",
-  `Variável` == "Animais abatidos"
+  `referencia_temporal` == "Total do trimestre",
+  `tipo_de_inspecao` == "Total",
+  `variavel` == "Animais abatidos"
   ) %>%
-  select(`Trimestre (Código)`, Valor)
+  select(`trimestre_codigo`, valor)
 
 bind_rows(
-  abate_bovino %>% mutate(tipo = `Tipo de rebanho bovino`),
+  abate_bovino %>% mutate(tipo = `tipo_de_rebanho_bovino`),
   abate_frango %>% mutate(tipo = "Frango")
 ) %>%
-  select(`Trimestre (Código)`, tipo, Valor) %>%
+  select(`trimestre_codigo`, tipo, valor) %>%
   drop_na() %>%
-  mutate(tri = triForm(`Trimestre (Código)`)) %>%
-  ggplot(aes(factor(tri, levels = c("1T\n2022", "2T\n2022", "3T\n2022", "4T\n2022")), Valor, fill = tipo)) +
+  mutate(tri = triForm(`trimestre_codigo`)) %>%
+  ggplot(aes(factor(tri, levels = c("1T\n2023", "2T\n2023", "3T\n2023", "4T\n2023")), valor, fill = tipo)) +
   geom_bar(stat = "identity", position = "dodge") +
   scale_y_continuous(labels = function(n) n / m)
 ```
+
